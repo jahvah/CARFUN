@@ -33,7 +33,7 @@ Private Sub BTN_LOGIN_Click(sender As Object, e As EventArgs) Handles BTN_LOGIN.
                 MessageBox.Show("Admin login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
                 Me.Hide()
-                ADMIN.Show()
+                ADMINFRONT.Show()
             Else
                 MessageBox.Show("Invalid email or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             End If
