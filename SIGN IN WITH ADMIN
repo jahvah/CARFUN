@@ -1,0 +1,48 @@
+Private Sub BTN_LOGIN_Click(sender As Object, e As EventArgs) Handles BTN_LOGIN.Click
+        Try
+            conn.Open()
+
+            Dim email As String = TXT_EMAIL.Text.Trim()
+            Dim password As String = TXT_PASSWORD.Text.Trim()
+
+            ' First: check in Customers
+            Dim customerQuery As String = "SELECT * FROM Customers WHERE EMAIL = '" & email & "' AND PASSWORD = '" & password & "'"
+            cmd = New MySqlCommand(customerQuery, conn)
+            reader = cmd.ExecuteReader()
+
+            If reader.Read() Then
+                Dim customerId As Integer = Convert.ToInt32(reader("CUSTOMER_ID"))
+
+                SessionData.LoggedInCustomerID = customerId
+                MessageBox.Show("Customer login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+                PROFILE.CustomerID = customerId
+                Me.Hide()
+                PROFILE.Show()
+                reader.Close()
+                Exit Sub
+            End If
+            reader.Close()
+
+            ' Second: check in Admins
+            Dim adminQuery As String = "SELECT * FROM admins WHERE EMAIL = '" & email & "' AND PASSWORD = '" & password & "'"
+            cmd = New MySqlCommand(adminQuery, conn)
+            reader = cmd.ExecuteReader()
+
+            If reader.Read() Then
+                MessageBox.Show("Admin login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+                Me.Hide()
+                ADMIN.Show()
+            Else
+                MessageBox.Show("Invalid email or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            End If
+
+        Catch ex As Exception
+            MessageBox.Show("Error: " & ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+
+        Finally
+            conn.Close()
+        End Try
+
+    End Sub
