@@ -39,7 +39,7 @@ Public Class CUSTOMERS_CRUD
     Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
 
         If TXT_NAME.Text = "" Or TXT_PHONE.Text = "" Or TXT_EMAIL.Text = "" Or TXT_PASSWORD.Text = "" Then
-            MessageBox.Show("Please fill in all fields.")
+            MessageBox.Show("Please fill valid fields.")
             Return
         End If
 
