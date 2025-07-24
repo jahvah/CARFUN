@@ -1,0 +1,113 @@
+Imports MySql.Data.MySqlClient
+Public Class ADMIN
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Private Sub ADMIN_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadAdmins()
+    End Sub
+    Private Sub ClearTextboxes()
+        TXT_ADMINID.Clear()
+        TXT_EMAIL.Clear()
+        TXT_PASSWORD.Clear()
+    End Sub
+
+    Private Sub LoadAdmins()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT * FROM admins"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading admins: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+        If TXT_EMAIL.Text = "" Or TXT_PASSWORD.Text = "" Then
+            MessageBox.Show("Please enter email and password.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO admins (EMAIL, PASSWORD) VALUES ('" & TXT_EMAIL.Text & "', '" & TXT_PASSWORD.Text & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Admin created successfully.")
+            LoadAdmins()
+            ClearTextboxes()
+
+        Catch ex As Exception
+            MessageBox.Show("Error creating admin: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        If TXT_ADMINID.Text = "" Then
+            MessageBox.Show("Please enter ADMIN_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+
+            If TXT_EMAIL.Text <> "" Then
+                updates.Add("EMAIL = '" & TXT_EMAIL.Text & "'")
+            End If
+
+            If TXT_PASSWORD.Text <> "" Then
+                updates.Add("PASSWORD = '" & TXT_PASSWORD.Text & "'")
+            End If
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim updateQuery As String = "UPDATE admins SET " & String.Join(", ", updates) & " WHERE ADMIN_ID = " & TXT_ADMINID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Admin updated successfully.")
+            LoadAdmins()
+            ClearTextboxes()
+
+        Catch ex As Exception
+            MessageBox.Show("Error updating admin: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_ADMINID.Text = "" Then
+            MessageBox.Show("Please enter ADMIN_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim deleteQuery As String = "DELETE FROM admins WHERE ADMIN_ID = " & TXT_ADMINID.Text
+            Dim cmd As New MySqlCommand(deleteQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Admin deleted successfully.")
+            LoadAdmins()
+            ClearTextboxes()
+
+        Catch ex As Exception
+            MessageBox.Show("Error deleting admin: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
