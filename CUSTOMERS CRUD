@@ -1,0 +1,120 @@
+Imports MySql.Data.MySqlClient
+Public Class CUSTOMERS_CRUD
+
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Private Sub CUSTOMERS_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        LoadCustomers()
+
+    End Sub
+    Private Sub LoadCustomers()
+
+        Try
+            conn.Open()
+            Dim query As String = "SELECT CUSTOMER_ID, NAME, PHONE, EMAIL, PASSWORD FROM customers"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading customers: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+
+    Private Sub ClearTextboxes()
+
+        TXT_CUSTOMERID.Clear()
+        TXT_NAME.Clear()
+        TXT_PHONE.Clear()
+        TXT_EMAIL.Clear()
+        TXT_PASSWORD.Clear()
+
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+
+        If TXT_NAME.Text = "" Or TXT_PHONE.Text = "" Or TXT_EMAIL.Text = "" Or TXT_PASSWORD.Text = "" Then
+            MessageBox.Show("Please fill in all fields.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO customers (NAME, PHONE, EMAIL, PASSWORD) VALUES ('" & TXT_NAME.Text & "', '" & TXT_PHONE.Text & "', '" & TXT_EMAIL.Text & "', '" & TXT_PASSWORD.Text & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Customer created successfully.")
+            LoadCustomers()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating customer: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+
+        If TXT_CUSTOMERID.Text = "" Then
+            MessageBox.Show("Please enter CUSTOMER_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If TXT_NAME.Text <> "" Then updates.Add("NAME = '" & TXT_NAME.Text & "'")
+            If TXT_PHONE.Text <> "" Then updates.Add("PHONE = '" & TXT_PHONE.Text & "'")
+            If TXT_EMAIL.Text <> "" Then updates.Add("EMAIL = '" & TXT_EMAIL.Text & "'")
+            If TXT_PASSWORD.Text <> "" Then updates.Add("PASSWORD = '" & TXT_PASSWORD.Text & "'")
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim updateQuery As String = "UPDATE customers SET " & String.Join(", ", updates) & " WHERE CUSTOMER_ID = " & TXT_CUSTOMERID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Customer updated successfully.")
+            LoadCustomers()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating customer: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_CUSTOMERID.Text = "" Then
+            MessageBox.Show("Please enter CUSTOMER_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim deleteQuery As String = "DELETE FROM customers WHERE CUSTOMER_ID = " & TXT_CUSTOMERID.Text
+            Dim cmd As New MySqlCommand(deleteQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Customer deleted successfully.")
+            LoadCustomers()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting customer: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+End Class
