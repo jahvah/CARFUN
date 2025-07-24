@@ -1,17 +1,24 @@
 Imports MySql.Data.MySqlClient
-Public Class ADMIN
+Public Class ADMIN_CRUD
+
     Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
 
-    Private Sub ADMIN_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    Private Sub ADMIN_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
         LoadAdmins()
+
     End Sub
+
     Private Sub ClearTextboxes()
+
         TXT_ADMINID.Clear()
         TXT_EMAIL.Clear()
         TXT_PASSWORD.Clear()
+
     End Sub
 
     Private Sub LoadAdmins()
+
         Try
             conn.Open()
             Dim query As String = "SELECT * FROM admins"
@@ -25,9 +32,10 @@ Public Class ADMIN
             MessageBox.Show("Error loading admins: " & ex.Message)
             conn.Close()
         End Try
-    End Sub
 
+    End Sub
     Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+
         If TXT_EMAIL.Text = "" Or TXT_PASSWORD.Text = "" Then
             MessageBox.Show("Please enter email and password.")
             Return
@@ -48,9 +56,11 @@ Public Class ADMIN
             MessageBox.Show("Error creating admin: " & ex.Message)
             conn.Close()
         End Try
+
     End Sub
 
     Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+
         If TXT_ADMINID.Text = "" Then
             MessageBox.Show("Please enter ADMIN_ID to update.")
             Return
@@ -86,9 +96,11 @@ Public Class ADMIN
             MessageBox.Show("Error updating admin: " & ex.Message)
             conn.Close()
         End Try
+
     End Sub
 
     Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+
         If TXT_ADMINID.Text = "" Then
             MessageBox.Show("Please enter ADMIN_ID to delete.")
             Return
@@ -109,5 +121,6 @@ Public Class ADMIN
             MessageBox.Show("Error deleting admin: " & ex.Message)
             conn.Close()
         End Try
+
     End Sub
 End Class
