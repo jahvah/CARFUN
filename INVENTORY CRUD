@@ -1,0 +1,87 @@
+Imports MySql.Data.MySqlClient
+Public Class INVENTORY_CRUD
+
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Private Sub LoadData()
+        Dim query As String = "SELECT ITEM_ID, ITEM_NAME, QUANTITY, UNIT_COST FROM inventory"
+        Dim adapter As New MySqlDataAdapter(query, conn)
+        Dim table As New DataTable()
+        adapter.Fill(table)
+        DataGridView1.DataSource = table
+    End Sub
+
+    Private Sub ClearTextboxes()
+        TXT_ITEMID.Text = ""
+        TXT_ITEMNAME.Text = ""
+        TXT_QUANTITY.Text = ""
+        TXT_UNITCOST.Text = ""
+    End Sub
+    Private Sub INVENTORY_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadData()
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+        If TXT_ITEMNAME.Text = "" Or TXT_QUANTITY.Text = "" Or TXT_UNITCOST.Text = "" Then
+            MessageBox.Show("Please fill valid fields")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO inventory (ITEM_NAME, QUANTITY, UNIT_COST) VALUES ('" & TXT_ITEMNAME.Text & "', '" & TXT_QUANTITY.Text & "', '" & TXT_UNITCOST.Text & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+            LoadData()
+            ClearTextboxes()
+            MessageBox.Show("Item created successfully.")
+
+        Catch ex As Exception
+            MessageBox.Show("Error creating inventory: " & ex.Message)
+            conn.Close()
+        End Try
+
+
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        conn.Open()
+        Dim updateFields As String = ""
+
+        If TXT_ITEMNAME.Text.Trim() <> "" Then
+            updateFields &= "ITEM_NAME = '" & TXT_ITEMNAME.Text & "',"
+        End If
+        If TXT_QUANTITY.Text.Trim() <> "" Then
+            updateFields &= "QUANTITY = '" & TXT_QUANTITY.Text & "',"
+        End If
+        If TXT_UNITCOST.Text.Trim() <> "" Then
+            updateFields &= "UNIT_COST = '" & TXT_UNITCOST.Text & "',"
+        End If
+
+        If updateFields <> "" Then
+            updateFields = updateFields.TrimEnd(","c)
+            Dim query As String = "UPDATE inventory SET " & updateFields & " WHERE ITEM_ID = '" & TXT_ITEMID.Text & "'"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            MessageBox.Show("Item updated successfully.")
+        Else
+            MessageBox.Show("No fields to update.")
+        End If
+
+        conn.Close()
+        LoadData()
+        ClearTextboxes()
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        conn.Open()
+        Dim query As String = "DELETE FROM inventory WHERE ITEM_ID = '" & TXT_ITEMID.Text & "'"
+        Dim cmd As New MySqlCommand(query, conn)
+        cmd.ExecuteNonQuery()
+        conn.Close()
+        LoadData()
+        ClearTextboxes()
+        MessageBox.Show("Item deleted successfully.")
+    End Sub
+End Class
