@@ -21,7 +21,7 @@ Public Class ADMIN_CRUD
 
         Try
             conn.Open()
-            Dim query As String = "SELECT * FROM admins"
+            Dim query As String = "SELECT ADMIN_ID, EMAIL, PASSWORD FROM admins"
             Dim cmd As New MySqlCommand(query, conn)
             Dim adapter As New MySqlDataAdapter(cmd)
             Dim table As New DataTable()
@@ -37,7 +37,7 @@ Public Class ADMIN_CRUD
     Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
 
         If TXT_EMAIL.Text = "" Or TXT_PASSWORD.Text = "" Then
-            MessageBox.Show("Please enter email and password.")
+            MessageBox.Show("Please fill valid fields")
             Return
         End If
 
