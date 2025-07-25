@@ -1,0 +1,111 @@
+Imports MySql.Data.MySqlClient
+Public Class SERVICEFIX_CRUD
+
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Private Sub SERVICEFIX_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadServiceFix()
+    End Sub
+    Private Sub LoadServiceFix()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT * FROM servicefix"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading servicefix: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub ClearTextboxes()
+        TXT_FIXID.Clear()
+        TXT_FIXTYPE.Clear()
+        TXT_APPOINTMENTDATE.Clear()
+        TXT_COST.Clear()
+        TXT_STATUS.Clear()
+        TXT_UPDATEDBY.Clear()
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+        If TXT_FIXTYPE.Text = "" Or TXT_APPOINTMENTDATE.Text = "" Or TXT_COST.Text = "" Or TXT_STATUS.Text = "" Or TXT_UPDATEDBY.Text = "" Then
+            MessageBox.Show("Please fill all required fields.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO servicefix (FIX_TYPE, APPOINTMENT_DATE, COST, STATUS, UPDATED_BY) VALUES ('" & TXT_FIXTYPE.Text & "', '" & TXT_APPOINTMENTDATE.Text & "', '" & TXT_COST.Text & "', '" & TXT_STATUS.Text & "', '" & TXT_UPDATEDBY.Text & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("ServiceFix record created successfully.")
+            LoadServiceFix()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating servicefix: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        If TXT_FIXID.Text = "" Then
+            MessageBox.Show("Please enter FIX_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If TXT_FIXTYPE.Text <> "" Then updates.Add("FIX_TYPE = '" & TXT_FIXTYPE.Text & "'")
+            If TXT_APPOINTMENTDATE.Text <> "" Then updates.Add("APPOINTMENT_DATE = '" & TXT_APPOINTMENTDATE.Text & "'")
+            If TXT_COST.Text <> "" Then updates.Add("COST = '" & TXT_COST.Text & "'")
+            If TXT_STATUS.Text <> "" Then updates.Add("STATUS = '" & TXT_STATUS.Text & "'")
+            If TXT_UPDATEDBY.Text <> "" Then updates.Add("UPDATED_BY = '" & TXT_UPDATEDBY.Text & "'")
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim query As String = "UPDATE servicefix SET " & String.Join(", ", updates) & " WHERE FIX_ID = " & TXT_FIXID.Text
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("ServiceFix record updated successfully.")
+            LoadServiceFix()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating servicefix: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_FIXID.Text = "" Then
+            MessageBox.Show("Please enter FIX_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "DELETE FROM servicefix WHERE FIX_ID = " & TXT_FIXID.Text
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("ServiceFix record deleted successfully.")
+            LoadServiceFix()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting servicefix: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
