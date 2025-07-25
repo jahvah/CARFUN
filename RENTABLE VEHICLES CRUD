@@ -1,0 +1,133 @@
+Imports MySql.Data.MySqlClient
+Public Class RENTABLEVH_CRUD
+
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Private Sub RENTABLEVH_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        LoadVehicles()
+
+    End Sub
+    Private Sub LoadVehicles()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT RENTABLE_VH_ID, MANUFACTURER, MODEL, YEAR, PRICE FROM rentablevehicles"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading vehicles: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub ClearTextboxes()
+        TXT_RENTABLEVHID.Clear()
+        TXT_MANUFACTURER.Clear()
+        TXT_MODEL.Clear()
+        TXT_YEAR.Clear()
+        TXT_PRICE.Clear()
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+
+        If TXT_MANUFACTURER.Text = "" Or TXT_MODEL.Text = "" Or TXT_YEAR.Text = "" Or TXT_PRICE.Text = "" Then
+            MessageBox.Show("Please fill all required fields.")
+            Return
+        End If
+
+        If Not IsNumeric(TXT_YEAR.Text) Or Not IsNumeric(TXT_PRICE.Text) Then
+            MessageBox.Show("YEAR and PRICE must be numeric.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO rentablevehicles (MANUFACTURER, MODEL, YEAR, PRICE) VALUES ('" &
+                                  TXT_MANUFACTURER.Text.Replace("'", "''") & "', '" &
+                                  TXT_MODEL.Text.Replace("'", "''") & "', " &
+                                  TXT_YEAR.Text & ", " & TXT_PRICE.Text & ")"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Vehicle created successfully.")
+            LoadVehicles()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating vehicle: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+
+    Private Sub BTN_UDPATE_Click(sender As Object, e As EventArgs) Handles BTN_UDPATE.Click
+        If TXT_RENTABLEVHID.Text = "" Then
+            MessageBox.Show("Please enter RENTABLE_VH_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If TXT_MANUFACTURER.Text <> "" Then updates.Add("MANUFACTURER = '" & TXT_MANUFACTURER.Text.Replace("'", "''") & "'")
+            If TXT_MODEL.Text <> "" Then updates.Add("MODEL = '" & TXT_MODEL.Text.Replace("'", "''") & "'")
+            If TXT_YEAR.Text <> "" Then
+                If Not IsNumeric(TXT_YEAR.Text) Then
+                    MessageBox.Show("YEAR must be numeric.")
+                    Return
+                End If
+                updates.Add("YEAR = " & TXT_YEAR.Text)
+            End If
+            If TXT_PRICE.Text <> "" Then
+                If Not IsNumeric(TXT_PRICE.Text) Then
+                    MessageBox.Show("PRICE must be numeric.")
+                    Return
+                End If
+                updates.Add("PRICE = " & TXT_PRICE.Text)
+            End If
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim updateQuery As String = "UPDATE rentablevehicles SET " & String.Join(", ", updates) & " WHERE RENTABLE_VH_ID = " & TXT_RENTABLEVHID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Vehicle updated successfully.")
+            LoadVehicles()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating vehicle: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_RENTABLEVHID.Text = "" Then
+            MessageBox.Show("Please enter RENTABLE_VH_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim deleteQuery As String = "DELETE FROM rentablevehicles WHERE RENTABLE_VH_ID = " & TXT_RENTABLEVHID.Text
+            Dim cmd As New MySqlCommand(deleteQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Vehicle deleted successfully.")
+            LoadVehicles()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting vehicle: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
