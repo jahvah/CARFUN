@@ -1,0 +1,125 @@
+Imports MySql.Data.MySqlClient
+Public Class RENTALS_CRUD
+
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Private Sub RENTALS_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        LoadRentals()
+
+    End Sub
+
+    Private Sub LoadRentals()
+        Try
+            conn.Open()
+
+            Dim query As String = "
+            SELECT 
+                RENTAL_ID,
+                CASE 
+                    WHEN SCHEDULE_DATE = '0000-00-00' THEN NULL 
+                    ELSE SCHEDULE_DATE 
+                END AS SCHEDULE_DATE,
+                CASE 
+                    WHEN SCHEDULE_END = '0000-00-00' THEN NULL 
+                    ELSE SCHEDULE_END 
+                END AS SCHEDULE_END
+            FROM rentals"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading rentals: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub ClearTextboxes()
+
+        TXT_RENTALID.Clear()
+        SCHEDULE_START.Value = Date.Now
+        SCHEDULE_END.Value = Date.Now
+
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+
+        Try
+            conn.Open()
+            Dim startDate As String = SCHEDULE_START.Value.ToString("yyyy-MM-dd")
+            Dim endDate As String = SCHEDULE_END.Value.ToString("yyyy-MM-dd")
+            Dim query As String = "INSERT INTO rentals (SCHEDULE_DATE, SCHEDULE_END) VALUES ('" & startDate & "', '" & endDate & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Rental created successfully.")
+            LoadRentals()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating rental: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+
+        If TXT_RENTALID.Text = "" Then
+            MessageBox.Show("Please enter RENTAL_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If SCHEDULE_START.Value <> Nothing Then updates.Add("SCHEDULE_DATE = '" & SCHEDULE_START.Value.ToString("yyyy-MM-dd") & "'")
+            If SCHEDULE_END.Value <> Nothing Then updates.Add("SCHEDULE_END = '" & SCHEDULE_END.Value.ToString("yyyy-MM-dd") & "'")
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim updateQuery As String = "UPDATE rentals SET " & String.Join(", ", updates) & " WHERE RENTAL_ID = " & TXT_RENTALID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Rental updated successfully.")
+            LoadRentals()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating rental: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+
+        If TXT_RENTALID.Text = "" Then
+            MessageBox.Show("Please enter RENTAL_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim deleteQuery As String = "DELETE FROM rentals WHERE RENTAL_ID = " & TXT_RENTALID.Text
+            Dim cmd As New MySqlCommand(deleteQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Rental deleted successfully.")
+            LoadRentals()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting rental: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+End Class
