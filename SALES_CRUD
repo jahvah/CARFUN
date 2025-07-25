@@ -1,0 +1,118 @@
+Imports MySql.Data.MySqlClient
+Public Class SALES_CRUD
+
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Private Sub SALES_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        LoadSales()
+
+    End Sub
+    Private Sub LoadSales()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT SALES_ID, QUANTITY_SOLD, UNIT_PRICE, IFNULL(SALES_DATE, '') AS SALES_DATE, TOTAL_SALES FROM sales"
+
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading sales: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub ClearTextboxes()
+        TXT_SALESID.Clear()
+        TXT_QUANTITYSOLD.Clear()
+        TXT_UNITPRICE.Clear()
+        TXT_SALESDATE.Clear()
+        TXT_TOTALSALES.Clear()
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+        If TXT_QUANTITYSOLD.Text = "" Or TXT_UNITPRICE.Text = "" Or TXT_SALESDATE.Text = "" Then
+            MessageBox.Show("Please fill in all required fields.")
+            Return
+        End If
+
+        Dim totalSales As Decimal = Val(TXT_QUANTITYSOLD.Text) * Val(TXT_UNITPRICE.Text)
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO sales (QUANTITY_SOLD, UNIT_PRICE, SALES_DATE, TOTAL_SALES) VALUES ('" & TXT_QUANTITYSOLD.Text & "', '" & TXT_UNITPRICE.Text & "', '" & TXT_SALESDATE.Text & "', '" & totalSales & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Sale record created successfully.")
+            LoadSales()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating sale record: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        If TXT_SALESID.Text = "" Then
+            MessageBox.Show("Please enter SALES_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If TXT_QUANTITYSOLD.Text <> "" Then updates.Add("QUANTITY_SOLD = '" & TXT_QUANTITYSOLD.Text & "'")
+            If TXT_UNITPRICE.Text <> "" Then updates.Add("UNIT_PRICE = '" & TXT_UNITPRICE.Text & "'")
+            If TXT_SALESDATE.Text <> "" Then updates.Add("SALES_DATE = '" & TXT_SALESDATE.Text & "'")
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            If TXT_QUANTITYSOLD.Text <> "" And TXT_UNITPRICE.Text <> "" Then
+                Dim newTotal As Decimal = Val(TXT_QUANTITYSOLD.Text) * Val(TXT_UNITPRICE.Text)
+                updates.Add("TOTAL_SALES = '" & newTotal & "'")
+            End If
+
+            conn.Open()
+            Dim updateQuery As String = "UPDATE sales SET " & String.Join(", ", updates) & " WHERE SALES_ID = " & TXT_SALESID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Sale record updated successfully.")
+            LoadSales()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating sale record: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_SALESID.Text = "" Then
+            MessageBox.Show("Please enter SALES_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim deleteQuery As String = "DELETE FROM sales WHERE SALES_ID = " & TXT_SALESID.Text
+            Dim cmd As New MySqlCommand(deleteQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Sale record deleted successfully.")
+            LoadSales()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting sale record: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
