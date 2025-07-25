@@ -1,0 +1,121 @@
+Imports MySql.Data.MySqlClient
+Public Class SERVICEPAINT_CRUD
+
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Private Sub SERVICEPAINT_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadPaints()
+    End Sub
+
+    Private Sub LoadPaints()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT PAINT_ID, PAINT_TYPE, COLOR_REQUESTED, APPOINTMENT_DATE, COST, STATUS, UPD_BY FROM servicepaint"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading paints: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub ClearTextboxes()
+        TXT_SERVICEPAINTID.Clear()
+        TXT_PAINTYPE.Clear()
+        TXT_COLORREQUESTED.Clear()
+        TXT_COST.Clear()
+        TXT_STATUS.Clear()
+        TXT_UPDBY.Clear()
+        APPOINTMENT_DATE.Value = DateTime.Now
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+        If TXT_PAINTYPE.Text = "" Or TXT_COLORREQUESTED.Text = "" Or TXT_COST.Text = "" Or TXT_STATUS.Text = "" Or TXT_UPDBY.Text = "" Then
+            MessageBox.Show("Please fill all required fields.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim appointmentDate As String = APPOINTMENT_DATE.Value.ToString("yyyy-MM-dd")
+            Dim query As String = "INSERT INTO servicepaint (PAINT_TYPE, COLOR_REQUESTED, APPOINTMENT_DATE, COST, STATUS, UPD_BY) VALUES ('" &
+                                  TXT_PAINTYPE.Text & "', '" &
+                                  TXT_COLORREQUESTED.Text & "', '" &
+                                  appointmentDate & "', '" &
+                                  TXT_COST.Text & "', '" &
+                                  TXT_STATUS.Text & "', '" &
+                                  TXT_UPDBY.Text & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Paint service created successfully.")
+            LoadPaints()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating paint service: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        If TXT_SERVICEPAINTID.Text = "" Then
+            MessageBox.Show("Please enter PAINT_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If TXT_PAINTYPE.Text <> "" Then updates.Add("PAINT_TYPE = '" & TXT_PAINTYPE.Text & "'")
+            If TXT_COLORREQUESTED.Text <> "" Then updates.Add("COLOR_REQUESTED = '" & TXT_COLORREQUESTED.Text & "'")
+            If TXT_COST.Text <> "" Then updates.Add("COST = '" & TXT_COST.Text & "'")
+            If TXT_STATUS.Text <> "" Then updates.Add("STATUS = '" & TXT_STATUS.Text & "'")
+            If TXT_UPDBY.Text <> "" Then updates.Add("UPD_BY = '" & TXT_UPDBY.Text & "'")
+            updates.Add("APPOINTMENT_DATE = '" & APPOINTMENT_DATE.Value.ToString("yyyy-MM-dd") & "'")
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim updateQuery As String = "UPDATE servicepaint SET " & String.Join(", ", updates) & " WHERE PAINT_ID = " & TXT_SERVICEPAINTID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Paint service updated successfully.")
+            LoadPaints()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating paint service: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_SERVICEPAINTID.Text = "" Then
+            MessageBox.Show("Please enter PAINT_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim deleteQuery As String = "DELETE FROM servicepaint WHERE PAINT_ID = " & TXT_SERVICEPAINTID.Text
+            Dim cmd As New MySqlCommand(deleteQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Paint service deleted successfully.")
+            LoadPaints()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting paint service: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
