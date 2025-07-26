@@ -1,0 +1,104 @@
+Imports MySql.Data.MySqlClient
+Public Class TRANSACTIONS_CRUD
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+    Private Sub TRANSACTIONS_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadTransactions()
+
+    End Sub
+    Private Sub LoadTransactions()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT TRANSACTION_ID, AMOUNT, TRANSACTION_DATE FROM transactions"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading sales: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub ClearTextboxes()
+        TXT_TRANSACTIONID.Clear()
+        TXT_AMOUNT.Clear()
+        TXT_TRANSACTIONDATE.Clear()
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+        If TXT_AMOUNT.Text = "" Or TXT_TRANSACTIONDATE.Text = "" Then
+            MessageBox.Show("Please fill valid fields.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO transactions (AMOUNT, TRANSACTION_DATE) VALUES ('" & TXT_AMOUNT.Text & "', '" & TXT_TRANSACTIONDATE.Text & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Transaction created successfully.")
+            LoadTransactions()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating transaction: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        If TXT_TRANSACTIONID.Text = "" Then
+            MessageBox.Show("Please enter TRANSACTION_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If TXT_AMOUNT.Text <> "" Then updates.Add("AMOUNT = '" & TXT_AMOUNT.Text & "'")
+            If TXT_TRANSACTIONDATE.Text <> "" Then updates.Add("TRANSACTION_DATE = '" & TXT_TRANSACTIONDATE.Text & "'")
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim updateQuery As String = "UPDATE transactions SET " & String.Join(", ", updates) & " WHERE TRANSACTION_ID = " & TXT_TRANSACTIONID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Transaction updated successfully.")
+            LoadTransactions()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating transaction: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_TRANSACTIONID.Text = "" Then
+            MessageBox.Show("Please enter TRANSACTION_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim deleteQuery As String = "DELETE FROM transactions WHERE TRANSACTION_ID = " & TXT_TRANSACTIONID.Text
+            Dim cmd As New MySqlCommand(deleteQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Transaction deleted successfully.")
+            LoadTransactions()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting transaction: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
