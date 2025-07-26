@@ -1,0 +1,101 @@
+Imports MySql.Data.MySqlClient
+Public Class VEHICLES_CRUD
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+    Private Sub VEHICLES_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadVehicles()
+    End Sub
+    Private Sub LoadVehicles()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT VEHICLE_ID, PLATE_NUMBER FROM vehicles"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading vehicles: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub ClearTextboxes()
+        TXT_VEHICLEID.Clear()
+        TXT_PLATENUMBER.Clear()
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+        If TXT_PLATENUMBER.Text = "" Then
+            MessageBox.Show("Please enter a plate number.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO vehicles (PLATE_NUMBER) VALUES ('" & TXT_PLATENUMBER.Text & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Vehicle created successfully.")
+            LoadVehicles()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating vehicle: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        If TXT_VEHICLEID.Text = "" Then
+            MessageBox.Show("Please enter VEHICLE_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If TXT_PLATENUMBER.Text <> "" Then updates.Add("PLATE_NUMBER = '" & TXT_PLATENUMBER.Text & "'")
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim updateQuery As String = "UPDATE vehicles SET " & String.Join(", ", updates) & " WHERE VEHICLE_ID = " & TXT_VEHICLEID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Vehicle updated successfully.")
+            LoadVehicles()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating vehicle: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_VEHICLEID.Text = "" Then
+            MessageBox.Show("Please enter VEHICLE_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim deleteQuery As String = "DELETE FROM vehicles WHERE VEHICLE_ID = " & TXT_VEHICLEID.Text
+            Dim cmd As New MySqlCommand(deleteQuery, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Vehicle deleted successfully.")
+            LoadVehicles()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting vehicle: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
