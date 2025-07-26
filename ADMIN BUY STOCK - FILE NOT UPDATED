@@ -1,0 +1,131 @@
+Imports MySql.Data.MySqlClient
+Public Class ADMIN_PURCHASE
+    Dim conn As New MySqlConnection("server=localhost;userid=root;password=;database=carfun")
+
+
+    Private Sub ADMIN_PURCHASE_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Try
+            conn.Open()
+            Dim da As New MySqlDataAdapter("SELECT * FROM stocks", conn)
+            Dim dt As New DataTable()
+            da.Fill(dt)
+            DataGridView1.DataSource = dt
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading stocks: " & ex.Message)
+            conn.Close()
+        End Try
+
+    End Sub
+
+    Private Sub BTN_ORDER_Click(sender As Object, e As EventArgs) Handles BTN_ORDER.Click
+        Dim stockID As Integer = Val(TXT_STOCKID.Text)
+        Dim qty As Integer = Val(TXT_QTY.Text)
+
+        If stockID = 0 Or qty <= 0 Then
+            MessageBox.Show("Please enter valid stock ID and quantity.")
+            Exit Sub
+        End If
+
+        Try
+            conn.Open()
+            Dim cmd As New MySqlCommand("SELECT ITEM_NAME, ITEM_PRICE FROM stocks WHERE SUPPLIER_ID = " & stockID, conn)
+            Dim reader As MySqlDataReader = cmd.ExecuteReader()
+
+            If reader.Read() Then
+                Dim itemName As String = reader("ITEM_NAME").ToString()
+                Dim price As Decimal = reader("ITEM_PRICE")
+                Dim total As Decimal = qty * price
+                Dim itemLine As String = stockID & "|" & itemName & "|" & qty & "|" & price.ToString("0.00") & "|" & total.ToString("0.00")
+                ListBox1.Items.Add(itemLine)
+
+                TXT_STOCKID.Clear()
+                TXT_QTY.Clear()
+            Else
+                MessageBox.Show("Item not found.")
+            End If
+
+            reader.Close()
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If ListBox1.SelectedIndex >= 0 Then
+            ListBox1.Items.RemoveAt(ListBox1.SelectedIndex)
+        Else
+            MessageBox.Show("Please select an item to delete.")
+        End If
+    End Sub
+
+    Private Sub BTN_TOTAL_Click(sender As Object, e As EventArgs) Handles BTN_TOTAL.Click
+        Dim totalAmount As Decimal = 0
+
+        For Each item As String In ListBox1.Items
+            Dim parts() As String = item.Split("|"c)
+            totalAmount += Val(parts(4)) ' Total column
+        Next
+
+        Dim payment As String = InputBox("Total: " & totalAmount.ToString("0.00") & vbCrLf & "Enter payment amount:")
+        If Not IsNumeric(payment) Then
+            MessageBox.Show("Invalid payment.")
+            Exit Sub
+        End If
+
+        Dim paid As Decimal = Val(payment)
+        If paid < totalAmount Then
+            MessageBox.Show("Not enough balance.")
+            Exit Sub
+        End If
+
+        Try
+            conn.Open()
+
+            For Each item As String In ListBox1.Items
+                Dim parts() As String = item.Split("|"c)
+                Dim stockID As Integer = Val(parts(0))
+                Dim itemName As String = parts(1)
+                Dim qty As Integer = Val(parts(2))
+                Dim price As Decimal = Val(parts(3))
+                Dim total As Decimal = Val(parts(4))
+
+                ' 1. Insert into expenses
+                Dim expenseSql As String = "INSERT INTO expenses (EXPENSE_TYPE, AMOUNT, ITEM_ID, QUANTITY, EXPENSE_DATE) VALUES ('Stock Purchase'," & total & ", NULL," & qty & ", CURDATE())"
+                Dim cmdExp As New MySqlCommand(expenseSql, conn)
+                cmdExp.ExecuteNonQuery()
+
+                ' 2. Check inventory
+                Dim invCheckSql As String = "SELECT ITEM_ID, QUANTITY FROM inventory WHERE ITEM_NAME = '" & itemName & "'"
+                Dim cmdCheck As New MySqlCommand(invCheckSql, conn)
+                Dim reader As MySqlDataReader = cmdCheck.ExecuteReader()
+
+                If reader.Read() Then
+                    ' Already exists → update quantity
+                    Dim existingQty As Integer = Val(reader("QUANTITY"))
+                    Dim invID As Integer = Val(reader("ITEM_ID"))
+                    reader.Close()
+                    Dim updateSql As String = "UPDATE inventory SET QUANTITY = " & (existingQty + qty) & " WHERE ITEM_ID = " & invID
+                    Dim cmdUpdate As New MySqlCommand(updateSql, conn)
+                    cmdUpdate.ExecuteNonQuery()
+                Else
+                    ' Not exists → insert
+                    reader.Close()
+                    Dim insertSql As String = "INSERT INTO inventory (ITEM_NAME, QUANTITY, UNIT_COST) VALUES ('" & itemName & "'," & qty & "," & price & ")"
+                    Dim cmdInsert As New MySqlCommand(insertSql, conn)
+                    cmdInsert.ExecuteNonQuery()
+                End If
+            Next
+
+            conn.Close()
+            ListBox1.Items.Clear()
+            MessageBox.Show("Transaction successful!")
+
+        Catch ex As Exception
+            MessageBox.Show("Transaction error: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
