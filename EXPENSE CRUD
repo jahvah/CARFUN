@@ -1,0 +1,108 @@
+Imports MySql.Data.MySqlClient
+Public Class EXPENSES_CRUD
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+    Private Sub EXPENSES_CRUD_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadExpenses()
+    End Sub
+
+    Private Sub LoadExpenses()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT * FROM expenses"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+            conn.Close()
+        Catch ex As Exception
+            MessageBox.Show("Error loading expenses: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub ClearTextboxes()
+        TXT_EXPENSEID.Clear()
+        TXT_EXPENSETYPE.Clear()
+        TXT_AMOUNT.Clear()
+        TXT_QUANTITY.Clear()
+        TXT_EXPENSEDATE.Clear()
+    End Sub
+
+    Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
+        If TXT_EXPENSETYPE.Text = "" Or TXT_AMOUNT.Text = "" Or TXT_QUANTITY.Text = "" Or TXT_EXPENSEDATE.Text = "" Then
+            MessageBox.Show("Please fill all required fields.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "INSERT INTO expenses (EXPENSE_TYPE, AMOUNT, QUANTITY, EXPENSE_DATE) VALUES ('" & TXT_EXPENSETYPE.Text & "', " & TXT_AMOUNT.Text & ", " & TXT_QUANTITY.Text & ", '" & TXT_EXPENSEDATE.Text & "')"
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Expense created successfully.")
+            LoadExpenses()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error creating expense: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        If TXT_EXPENSEID.Text = "" Then
+            MessageBox.Show("Please enter EXPENSE_ID to update.")
+            Return
+        End If
+
+        Try
+            Dim updates As New List(Of String)
+            If TXT_EXPENSETYPE.Text <> "" Then updates.Add("EXPENSE_TYPE = '" & TXT_EXPENSETYPE.Text & "'")
+            If TXT_AMOUNT.Text <> "" Then updates.Add("AMOUNT = " & TXT_AMOUNT.Text)
+            If TXT_QUANTITY.Text <> "" Then updates.Add("QUANTITY = " & TXT_QUANTITY.Text)
+            If TXT_EXPENSEDATE.Text <> "" Then updates.Add("EXPENSE_DATE = '" & TXT_EXPENSEDATE.Text & "'")
+
+            If updates.Count = 0 Then
+                MessageBox.Show("No fields to update.")
+                Return
+            End If
+
+            conn.Open()
+            Dim query As String = "UPDATE expenses SET " & String.Join(", ", updates) & " WHERE EXPENSE_ID = " & TXT_EXPENSEID.Text
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Expense updated successfully.")
+            LoadExpenses()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error updating expense: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_DELETE_Click(sender As Object, e As EventArgs) Handles BTN_DELETE.Click
+        If TXT_EXPENSEID.Text = "" Then
+            MessageBox.Show("Please enter EXPENSE_ID to delete.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim query As String = "DELETE FROM expenses WHERE EXPENSE_ID = " & TXT_EXPENSEID.Text
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+            MessageBox.Show("Expense deleted successfully.")
+            LoadExpenses()
+            ClearTextboxes()
+        Catch ex As Exception
+            MessageBox.Show("Error deleting expense: " & ex.Message)
+            conn.Close()
+        End Try
+    End Sub
+End Class
