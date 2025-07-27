@@ -11,7 +11,7 @@ Public Class RENTABLEVH_CRUD
     Private Sub LoadVehicles()
         Try
             conn.Open()
-            Dim query As String = "SELECT RENTABLE_VH_ID, MANUFACTURER, MODEL, YEAR, PRICE FROM rentablevehicles"
+            Dim query As String = "SELECT RENTABLE_VH_ID, MANUFACTURER, MODEL, YEAR, PLATE_NUM, PRICE FROM rentablevehicles"
             Dim cmd As New MySqlCommand(query, conn)
             Dim adapter As New MySqlDataAdapter(cmd)
             Dim table As New DataTable()
@@ -30,11 +30,12 @@ Public Class RENTABLEVH_CRUD
         TXT_MODEL.Clear()
         TXT_YEAR.Clear()
         TXT_PRICE.Clear()
+        TXT_PLATENUM.Clear()
     End Sub
 
     Private Sub BTN_CREATE_Click(sender As Object, e As EventArgs) Handles BTN_CREATE.Click
 
-        If TXT_MANUFACTURER.Text = "" Or TXT_MODEL.Text = "" Or TXT_YEAR.Text = "" Or TXT_PRICE.Text = "" Then
+        If TXT_MANUFACTURER.Text = "" Or TXT_MODEL.Text = "" Or TXT_YEAR.Text = "" Or TXT_PRICE.Text = "" Or TXT_PLATENUM.Text = "" Then
             MessageBox.Show("Please fill all required fields.")
             Return
         End If
@@ -46,10 +47,12 @@ Public Class RENTABLEVH_CRUD
 
         Try
             conn.Open()
-            Dim query As String = "INSERT INTO rentablevehicles (MANUFACTURER, MODEL, YEAR, PRICE) VALUES ('" &
+            Dim query As String = "INSERT INTO rentablevehicles (MANUFACTURER, MODEL, YEAR, PLATE_NUM, PRICE) VALUES ('" &
                                   TXT_MANUFACTURER.Text.Replace("'", "''") & "', '" &
                                   TXT_MODEL.Text.Replace("'", "''") & "', " &
-                                  TXT_YEAR.Text & ", " & TXT_PRICE.Text & ")"
+                                  TXT_YEAR.Text & ", '" &
+                                  TXT_PLATENUM.Text.Replace("'", "''") & "', " &
+                                  TXT_PRICE.Text & ")"
             Dim cmd As New MySqlCommand(query, conn)
             cmd.ExecuteNonQuery()
             conn.Close()
@@ -80,6 +83,9 @@ Public Class RENTABLEVH_CRUD
                     Return
                 End If
                 updates.Add("YEAR = " & TXT_YEAR.Text)
+            End If
+            If TXT_PLATENUM.Text <> "" Then
+                updates.Add("PLATE_NUM = '" & TXT_PLATENUM.Text.Replace("'", "''") & "'")
             End If
             If TXT_PRICE.Text <> "" Then
                 If Not IsNumeric(TXT_PRICE.Text) Then
