@@ -1,0 +1,37 @@
+Private Sub BTN_EXPENSE_Click_1(sender As Object, e As EventArgs) Handles BTN_EXPENSE.Click
+        Dim startDate As String = DateTimePicker3.Value.ToString("yyyy-MM-dd")
+        Dim endDate As String = DateTimePicker4.Value.ToString("yyyy-MM-dd")
+
+        Dim totalExpense As Decimal = 0D
+        Dim totalSalary As Decimal = 0D
+
+        Try
+            conn.Open()
+
+            ' 1. Get total general expenses from expenses table
+            Dim expenseQuery As String = "SELECT SUM(AMOUNT * QUANTITY) FROM expenses WHERE EXPENSE_DATE BETWEEN '" & startDate & "' AND '" & endDate & "'"
+            cmd = New MySqlCommand(expenseQuery, conn)
+            Dim expenseResult = cmd.ExecuteScalar()
+            totalExpense = If(IsDBNull(expenseResult), 0, Convert.ToDecimal(expenseResult))
+
+            ' 2. Get number of months between selected range
+            Dim monthsBetween As Integer = DateDiff(DateInterval.Month, DateTimePicker3.Value, DateTimePicker4.Value) + 1
+
+            ' 3. Get total salary of all staff
+            Dim salaryQuery As String = "SELECT SUM(SALARY) FROM staffs"
+            cmd = New MySqlCommand(salaryQuery, conn)
+            Dim salaryResult = cmd.ExecuteScalar()
+            totalSalary = If(IsDBNull(salaryResult), 0, Convert.ToDecimal(salaryResult)) * monthsBetween
+
+            ' 4. Combine both
+            Dim grandTotal As Decimal = totalExpense + totalSalary
+
+            MessageBox.Show("Total Expenses (₱" & totalExpense.ToString("N2") & ") + Salaries for " & monthsBetween & " month(s) (₱" & totalSalary.ToString("N2") & ") = ₱" & grandTotal.ToString("N2"), "Expense Report", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+        Catch ex As Exception
+            MessageBox.Show("Error: " & ex.Message, "Calculation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            conn.Close()
+        End Try
+    End Sub
+End Class
