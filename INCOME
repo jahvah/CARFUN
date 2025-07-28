@@ -1,0 +1,28 @@
+Private Sub BTN_INCOME_Click(sender As Object, e As EventArgs) Handles BTN_INCOME.Click
+        Dim startDate As String = DateTimePicker1.Value.ToString("yyyy-MM-dd")
+        Dim endDate As String = DateTimePicker2.Value.ToString("yyyy-MM-dd")
+
+        Dim totalIncome As Decimal = 0D
+
+        Try
+            conn.Open()
+
+            ' Query total income from Transactions table
+            Dim query As String = "SELECT SUM(AMOUNT) FROM Transactions WHERE TRANSACTION_DATE BETWEEN '" & startDate & "' AND '" & endDate & "'"
+            cmd = New MySqlCommand(query, conn)
+            Dim result = cmd.ExecuteScalar()
+            totalIncome = If(IsDBNull(result), 0, Convert.ToDecimal(result))
+
+            ' Calculate number of months in the range
+            Dim monthsBetween As Integer = DateDiff(DateInterval.Month, DateTimePicker1.Value, DateTimePicker2.Value) + 1
+
+            ' Show result in a message box
+            MessageBox.Show("Total Income from " & startDate & " to " & endDate & " (" & monthsBetween & " month(s)) is: ₱" & totalIncome.ToString("N2"), "Income Result", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+        Catch ex As Exception
+            MessageBox.Show("Error retrieving income: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+
+        Finally
+            conn.Close()
+        End Try
+    End Sub
