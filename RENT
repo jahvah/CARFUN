@@ -1,0 +1,127 @@
+//USE VEHICLE 1
+Imports MySql.Data.MySqlClient
+Public Class RENT1
+    Dim manufacturer As String = ""
+    Dim model As String = ""
+    Dim year As String = ""
+    Dim plate As String = ""
+    Dim price As Decimal = 0D
+    Private Sub RENT1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Button1.FlatStyle = FlatStyle.Flat
+        Button1.FlatAppearance.BorderSize = 0
+
+        BTN_EXIT.FlatStyle = FlatStyle.Flat
+        BTN_EXIT.FlatAppearance.BorderSize = 0
+
+        BTN_MINIMIZE.FlatStyle = FlatStyle.Flat
+        BTN_MINIMIZE.FlatAppearance.BorderSize = 0
+
+        BTN_RETURN.FlatStyle = FlatStyle.Flat
+        BTN_RETURN.FlatAppearance.BorderSize = 0
+
+        ' ✅ Set the constant car details here
+        manufacturer = "PORSCHE AG"
+        model = "RSR 3.8"
+        year = "2015"
+        plate = "UJI998"
+        price = 3000D
+
+        ' ✅ Show in labels
+        LBL_MANUFACTURER.Text = manufacturer
+        LBL_MODEL.Text = model
+        LBL_YEAR.Text = year
+        LBL_PLATENUM.Text = plate
+    End Sub
+
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        Dim conStr As String = "server=localhost;userid=root;password=;database=CarFun"
+        Dim con As New MySqlConnection(conStr)
+
+        Try
+            con.Open()
+
+            ' 1. Get dates from form
+            Dim startDate As String = DateTimePicker1.Value.ToString("yyyy-MM-dd")
+            Dim endDate As String = DateTimePicker2.Value.ToString("yyyy-MM-dd")
+
+            ' 2. Ask user for payment
+            Dim input As String = InputBox("Car Rental Price: ₱" & price.ToString("N2") & vbCrLf & "Enter Amount Tendered:", "Payment")
+            If input = "" Then
+                MessageBox.Show("Transaction cancelled.")
+                Exit Sub
+            End If
+
+            Dim tendered As Decimal
+            If Not Decimal.TryParse(input, tendered) Then
+                MessageBox.Show("Invalid amount entered.")
+                Exit Sub
+            End If
+
+            If tendered < price Then
+                MessageBox.Show("Insufficient amount tendered.")
+                Exit Sub
+            End If
+
+            Dim change As Decimal = tendered - price
+
+            ' 3. Show receipt
+            Dim receipt As String = "----- RENTAL RECEIPT -----" & vbCrLf &
+                                "Manufacturer: " & manufacturer & vbCrLf &
+                                "Model: " & model & vbCrLf &
+                                "Year: " & year & vbCrLf &
+                                "Plate Number: " & plate & vbCrLf &
+                                "Rental Period: " & startDate & " to " & endDate & vbCrLf &
+                                "Price: ₱" & price.ToString("N2") & vbCrLf &
+                                "Tendered: ₱" & tendered.ToString("N2") & vbCrLf &
+                                "Change: ₱" & change.ToString("N2") & vbCrLf &
+                                "--------------------------"
+            MessageBox.Show(receipt, "Rental Receipt")
+
+            ' 4. Insert into Rentals table
+            Dim sqlRental As String = "INSERT INTO Rentals (SCHEDULE_DATE, SCHEDULE_END) " &
+                                  "VALUES ('" & startDate & "', '" & endDate & "')"
+            Dim cmdRental As New MySqlCommand(sqlRental, con)
+            cmdRental.ExecuteNonQuery()
+
+            Dim rentalId As Integer = CInt(cmdRental.LastInsertedId)
+
+            ' 5. Insert into RentableVehicles table
+            Dim sqlVehicle As String = "INSERT INTO RentableVehicles (MANUFACTURER, MODEL, YEAR, PLATE_NUM, PRICE, Rentals_RENTAL_ID) " &
+                                   "VALUES ('" & manufacturer & "', '" & model & "', " & year & ", '" & plate & "', " & price & ", " & rentalId & ")"
+            Dim cmdVehicle As New MySqlCommand(sqlVehicle, con)
+            cmdVehicle.ExecuteNonQuery()
+
+            ' 6. Insert into Transactions table
+            Dim transactionDate As String = Date.Now.ToString("yyyy-MM-dd")
+            Dim customerId As Integer = PROFILE.CustomerID
+
+            Dim sqlTransaction As String = "INSERT INTO Transactions (AMOUNT, TRANSACTION_DATE, Customers_CUSTOMER_ID) " &
+                                       "VALUES (" & price & ", '" & transactionDate & "', " & customerId & ")"
+            Dim cmdTransaction As New MySqlCommand(sqlTransaction, con)
+            cmdTransaction.ExecuteNonQuery()
+
+            MessageBox.Show("Vehicle rented successfully!")
+
+        Catch ex As Exception
+            MessageBox.Show("Error: " & ex.Message)
+        Finally
+            con.Close()
+        End Try
+    End Sub
+
+
+
+    Private Sub BTN_RETURN_Click(sender As Object, e As EventArgs) Handles BTN_RETURN.Click
+        Me.Hide()
+        RENTALS.Show()
+
+    End Sub
+
+    Private Sub BTN_MINIMIZE_Click(sender As Object, e As EventArgs) Handles BTN_MINIMIZE.Click
+        Me.WindowState = FormWindowState.Minimized
+    End Sub
+
+    Private Sub BTN_Click(sender As Object, e As EventArgs) Handles BTN_EXIT.Click
+        Application.Exit()
+    End Sub
+End Class
