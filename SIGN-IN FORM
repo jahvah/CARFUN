@@ -1,0 +1,129 @@
+Imports MySql.Data.MySqlClient
+Public Class SIGN__IN
+
+    Dim conn As New MySqlConnection("Server=localhost;Database=CarFun;Uid=root;Pwd=;")
+    Dim cmd As MySqlCommand
+    Dim reader As MySqlDataReader
+
+
+    Private Sub SIGN__IN_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        BTN_MINIMIZE.FlatStyle = FlatStyle.Flat
+        BTN_MINIMIZE.FlatAppearance.BorderSize = 0
+
+        BTN_EXIT.FlatStyle = FlatStyle.Flat
+        BTN_EXIT.FlatAppearance.BorderSize = 0
+
+        BTN_LOGIN.FlatStyle = FlatStyle.Flat
+        BTN_LOGIN.FlatAppearance.BorderSize = 0
+
+        BTN_SIGNUP.FlatStyle = FlatStyle.Flat
+        BTN_SIGNUP.FlatAppearance.BorderSize = 0
+
+        BTN_GUEST.FlatStyle = FlatStyle.Flat
+        BTN_GUEST.FlatAppearance.BorderSize = 0
+
+    End Sub
+    Private Sub BTN_MINIMIZE_Click(sender As Object, e As EventArgs) Handles BTN_MINIMIZE.Click
+
+        Me.WindowState = FormWindowState.Minimized
+
+    End Sub
+
+    Private Sub BTN_EXIT_Click(sender As Object, e As EventArgs) Handles BTN_EXIT.Click
+
+        Application.Exit()
+
+    End Sub
+
+    Private Sub BTN_SIGNUP_Click(sender As Object, e As EventArgs) Handles BTN_SIGNUP.Click
+        Me.Hide()
+        SIGN_UP.Show()
+
+    End Sub
+
+    Private Sub BTN_LOGIN_Click(sender As Object, e As EventArgs) Handles BTN_LOGIN.Click
+        Try
+            conn.Open()
+
+            Dim email As String = TXT_EMAIL.Text.Trim()
+            Dim password As String = TXT_PASSWORD.Text.Trim()
+
+            ' First: check in Customers
+            Dim customerQuery As String = "SELECT * FROM Customers WHERE EMAIL = '" & email & "' AND PASSWORD = '" & password & "'"
+            cmd = New MySqlCommand(customerQuery, conn)
+            reader = cmd.ExecuteReader()
+
+            If reader.Read() Then
+                Dim customerId As Integer = Convert.ToInt32(reader("CUSTOMER_ID"))
+
+                SessionData.LoggedInCustomerID = customerId
+                MessageBox.Show("Customer login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+                PROFILE.CustomerID = customerId
+                Me.Hide()
+                PROFILE.Show()
+                reader.Close()
+                Exit Sub
+            End If
+            reader.Close()
+
+            ' Second: check in Admins
+            Dim adminQuery As String = "SELECT * FROM admins WHERE EMAIL = '" & email & "' AND PASSWORD = '" & password & "'"
+            cmd = New MySqlCommand(adminQuery, conn)
+            reader = cmd.ExecuteReader()
+
+            If reader.Read() Then
+                MessageBox.Show("Admin login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Me.Hide()
+                ADMINFRONT.Show()
+                reader.Close()
+                Exit Sub
+            End If
+            reader.Close()
+
+            ' Third: check in Staffs
+            Dim staffQuery As String = "SELECT * FROM staffs WHERE EMAIL = '" & email & "' AND PASSWORD = '" & password & "'"
+            cmd = New MySqlCommand(staffQuery, conn)
+            reader = cmd.ExecuteReader()
+
+            If reader.Read() Then
+                Dim position As String = reader("POSITION").ToString().ToLower()
+
+                MessageBox.Show("Staff login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Me.Hide()
+
+                If position = "mechanic" Then
+                    Dim staffFixForm As New STAFF_FIX()
+                    staffFixForm.StaffEmail = email ' Pass email to the form
+                    staffFixForm.Show()
+                ElseIf position = "painter" Then
+                    Dim staffPaintForm As New STAFF_PAINT()
+                    staffPaintForm.StaffEmail = email ' Pass email to the form
+                    staffPaintForm.Show()
+                Else
+                    MessageBox.Show("Unknown staff position: " & position, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    Me.Show()
+                End If
+                reader.Close()
+                Exit Sub
+            End If
+            reader.Close()
+
+            ' If all login checks fail
+            MessageBox.Show("Invalid email or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+
+        Catch ex As Exception
+            MessageBox.Show("Error: " & ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+
+        Finally
+            conn.Close()
+        End Try
+    End Sub
+
+
+
+    Private Sub BTN_GUEST_Click(sender As Object, e As EventArgs) Handles BTN_GUEST.Click
+
+    End Sub
+End Class
