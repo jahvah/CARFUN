@@ -1,0 +1,79 @@
+Imports MySql.Data.MySqlClient
+Public Class SERVICEPAINT_UPDATE
+
+    Dim conn As New MySqlConnection("server=localhost;user id=root;password=;database=carfun")
+
+    Public StaffEmail As String
+
+
+    Private Sub BTN_RETURN_Click(sender As Object, e As EventArgs) Handles BTN_RETURN.Click
+        Me.Hide()
+        STAFF_PAINT.StaffEmail = Me.StaffEmail ' ✅ Pass the email back before showing
+        STAFF_PAINT.Show()
+
+
+    End Sub
+
+    Private Sub BTN_MINIMIZE_Click(sender As Object, e As EventArgs) Handles BTN_MINIMIZE.Click
+        Me.WindowState = FormWindowState.Minimized
+    End Sub
+
+    Private Sub BTN_EXIT_Click(sender As Object, e As EventArgs) Handles BTN_EXIT.Click
+        Application.Exit()
+    End Sub
+
+    Private Sub SERVICEPAINT_UPDATE_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadPaintRecords()
+    End Sub
+
+    Private Sub LoadPaintRecords()
+        Try
+            conn.Open()
+            Dim query As String = "SELECT * FROM servicepaint"
+            Dim cmd As New MySqlCommand(query, conn)
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim table As New DataTable()
+            adapter.Fill(table)
+            DataGridView1.DataSource = table
+        Catch ex As Exception
+            MessageBox.Show("Error loading data: " & ex.Message)
+        Finally
+            conn.Close()
+        End Try
+    End Sub
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        If TXT_PAINTID.Text = "" Then
+            MessageBox.Show("Please enter the PAINT_ID.")
+            Return
+        End If
+
+        Dim updates As New List(Of String)
+
+        If TXT_STATUS.Text.Trim() <> "" Then
+            updates.Add("STATUS = '" & TXT_STATUS.Text.Replace("'", "''") & "'")
+        End If
+
+        If TXT_UPDBY.Text.Trim() <> "" Then
+            updates.Add("UPD_BY = '" & TXT_UPDBY.Text.Replace("'", "''") & "'")
+        End If
+
+        If updates.Count = 0 Then
+            MessageBox.Show("No fields to update.")
+            Return
+        End If
+
+        Try
+            conn.Open()
+            Dim updateQuery As String = "UPDATE servicepaint SET " & String.Join(", ", updates) & " WHERE PAINT_ID = " & TXT_PAINTID.Text
+            Dim cmd As New MySqlCommand(updateQuery, conn)
+            cmd.ExecuteNonQuery()
+            MessageBox.Show("Service paint record updated successfully.")
+        Catch ex As Exception
+            MessageBox.Show("Error updating record: " & ex.Message)
+        Finally
+            conn.Close()
+            LoadPaintRecords()
+        End Try
+    End Sub
+End Class
