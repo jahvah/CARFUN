@@ -1,0 +1,93 @@
+Imports MySql.Data.MySqlClient
+Public Class SERVICEFIX_UPDATE
+    Public StaffEmail As String
+    Private Sub BTN_RETURN_Click(sender As Object, e As EventArgs) Handles BTN_RETURN.Click
+        Me.Hide()
+        STAFF_FIX.StaffEmail = Me.StaffEmail ' ✅ Pass the email back before showing
+        STAFF_FIX.Show()
+    End Sub
+
+    Private Sub SERVICEFIX_UPDATE_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadServiceFixData()
+    End Sub
+    Private Sub LoadServiceFixData()
+        Dim conStr As String = "server=localhost;userid=root;password=;database=CarFun"
+        Dim con As New MySqlConnection(conStr)
+
+        Try
+            con.Open()
+            Dim da As New MySqlDataAdapter("SELECT * FROM servicefix", con)
+            Dim dt As New DataTable()
+            da.Fill(dt)
+            DataGridView1.DataSource = dt
+        Catch ex As Exception
+            MessageBox.Show("Failed to load records: " & ex.Message)
+        Finally
+            con.Close()
+        End Try
+    End Sub
+
+
+    Private Sub BTN_UPDATE_Click(sender As Object, e As EventArgs) Handles BTN_UPDATE.Click
+        Dim conStr As String = "server=localhost;userid=root;password=;database=CarFun"
+        Dim con As New MySqlConnection(conStr)
+
+
+        Try
+            con.Open()
+
+            ' Get values
+            Dim fixID As String = TXT_FIXID.Text.Trim()
+            Dim newStatus As String = TXT_STATUS.Text.Trim()
+            Dim updatedBy As String = TXT_UPDBY.Text.Trim()
+
+            ' Validate input
+            If fixID = "" Then
+                MessageBox.Show("Please enter the FIX_ID to update.")
+                Exit Sub
+            End If
+
+            ' Build update query (only updating fields that are not empty)
+            Dim updateParts As New List(Of String)
+
+            If newStatus <> "" Then
+                updateParts.Add("STATUS = '" & newStatus & "'")
+            End If
+
+            If updatedBy <> "" Then
+                updateParts.Add("UPDATED_BY = '" & updatedBy & "'")
+            End If
+
+            If updateParts.Count = 0 Then
+                MessageBox.Show("No new values provided for update.")
+                Exit Sub
+            End If
+
+            Dim updateQuery As String = "UPDATE servicefix SET " & String.Join(", ", updateParts) & " WHERE FIX_ID = " & fixID
+            Dim cmd As New MySqlCommand(updateQuery, con)
+            Dim rowsAffected As Integer = cmd.ExecuteNonQuery()
+
+            If rowsAffected > 0 Then
+                MessageBox.Show("Update successful!")
+
+                ' Refresh DataGridView
+                Dim da As New MySqlDataAdapter("SELECT * FROM servicefix", con)
+                Dim dt As New DataTable()
+                da.Fill(dt)
+                DataGridView1.DataSource = dt
+
+                ' Clear inputs
+                TXT_FIXID.Clear()
+                TXT_STATUS.Clear()
+                TXT_UPDBY.Clear()
+            Else
+                MessageBox.Show("No record found with that FIX_ID.")
+            End If
+
+        Catch ex As Exception
+            MessageBox.Show("Error: " & ex.Message)
+        Finally
+            con.Close()
+        End Try
+    End Sub
+End Class
